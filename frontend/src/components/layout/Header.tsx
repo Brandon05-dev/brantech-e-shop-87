@@ -40,18 +40,11 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg group-hover:shadow-primary/30 transition-shadow">
-                <Zap className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-display text-xl font-bold tracking-tight">
-                <span className="text-primary">Brantech</span>
-              </span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest -mt-1">Electronics</span>
-            </div>
+            <img 
+              src="/BE logo.svg" 
+              alt="Brantech Electronics" 
+              className="h-28 w-auto md:h-32 lg:h-36 transition-transform group-hover:scale-105"
+            />
           </Link>
 
           {/* Search - Desktop */}

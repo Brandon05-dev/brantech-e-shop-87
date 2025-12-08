@@ -35,13 +35,11 @@ const Footer: React.FC = () => {
           {/* Brand Column */}
           <div className="col-span-2 md:col-span-4 lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Zap className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-display text-xl font-bold text-primary">Brantech</span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-widest -mt-1">Electronics</span>
-              </div>
+              <img 
+                src="/BE logo.svg" 
+                alt="Brantech Electronics" 
+                className="h-40 w-auto md:h-48 lg:h-56"
+              />
             </Link>
             <p className="text-muted-foreground text-sm mb-6">
               Your trusted destination for premium electronics and cutting-edge technology.

@@ -1,70 +1,226 @@
-# Welcome to your Lovable project
+# Brantech E-Shop - MERN Stack E-Commerce Platform
 
-## Project info
+Complete MERN (MongoDB, Express, React, Node.js) stack e-commerce platform with admin dashboard, payment integration, and modern UI.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🏗️ Project Structure
 
-## How can I edit this code?
+```
+brantech-e-shop-87/
+├── frontend/              # React + TypeScript + Vite
+│   ├── src/
+│   │   ├── components/   # UI components
+│   │   ├── pages/        # Page components
+│   │   ├── services/     # API services
+│   │   ├── contexts/     # React contexts
+│   │   ├── hooks/        # Custom hooks
+│   │   └── lib/          # Utilities
+│   ├── public/           # Static assets
+│   └── package.json
+│
+├── backend/              # Node.js + Express + MongoDB
+│   ├── config/          # Database config
+│   ├── controllers/     # Route controllers
+│   ├── middleware/      # Auth & error handling
+│   ├── models/          # MongoDB models
+│   ├── routes/          # API routes
+│   └── server.js        # Entry point
+│
+├── setup.sh             # Automated setup script
+├── start.sh             # Start both servers
+└── MERN_SETUP.md        # Detailed setup guide
+```
 
-There are several ways of editing your application.
+## 🚀 Quick Start
 
-**Use Lovable**
+### Prerequisites
+- Node.js (v18 or higher)
+- MongoDB (local or Atlas)
+- npm or yarn
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Installation
 
-Changes made via Lovable will be committed automatically to this repo.
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd brantech-e-shop-87
+```
 
-**Use your preferred IDE**
+2. **Run automated setup**
+```bash
+chmod +x setup.sh start.sh
+./setup.sh
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+3. **Configure environment variables**
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Backend (`backend/.env`):
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/brantech-shop
+JWT_SECRET=your_secure_secret_key
+CLIENT_URL=http://localhost:5173
+```
 
-Follow these steps:
+Frontend (`frontend/.env`):
+```env
+VITE_API_URL=http://localhost:5000/api
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+4. **Start the application**
+```bash
+./start.sh
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Or manually:
+```bash
+# Terminal 1 - Backend
+cd backend
+npm run dev
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Terminal 2 - Frontend
+cd frontend
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 📱 Features
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Customer Features
+- ✅ User authentication & registration
+- ✅ Product browsing with filters
+- ✅ Shopping cart & wishlist
+- ✅ Secure checkout
+- ✅ Order tracking
+- ✅ Product reviews
+- ✅ Multiple payment methods (M-Pesa, Stripe, Cash)
 
-**Use GitHub Codespaces**
+### Admin Features
+- ✅ Dashboard with analytics
+- ✅ Product management (CRUD)
+- ✅ Order management & tracking
+- ✅ Customer management
+- ✅ Sales analytics
+- ✅ Settings configuration
+- ✅ Stock management
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔌 API Endpoints
 
-## What technologies are used for this project?
+### Base URL: `http://localhost:5000/api`
 
-This project is built with:
+**Authentication**
+- `POST /auth/register` - Register user
+- `POST /auth/login` - Login user
+- `GET /auth/me` - Get current user
 
+**Products**
+- `GET /products` - Get all products
+- `GET /products/:id` - Get single product
+- `POST /products` - Create product (admin)
+- `PUT /products/:id` - Update product (admin)
+- `DELETE /products/:id` - Delete product (admin)
+
+**Orders**
+- `POST /orders` - Create order
+- `GET /orders` - Get all orders (admin)
+- `GET /orders/myorders` - Get user orders
+- `PUT /orders/:id` - Update order status (admin)
+
+**Payments**
+- `POST /payment/mpesa/initiate` - M-Pesa payment
+- `POST /payment/stripe/create-intent` - Stripe payment
+
+## 🛠️ Tech Stack
+
+### Frontend
+- React 18 with TypeScript
 - Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- TanStack Query
+- React Router
+- Shadcn/ui + Tailwind CSS
+- Axios
 
-## How can I deploy this project?
+### Backend
+- Node.js + Express
+- MongoDB + Mongoose
+- JWT Authentication
+- Bcrypt
+- Cloudinary (image uploads)
+- Stripe & M-Pesa integration
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## 📖 Documentation
 
-## Can I connect a custom domain to my Lovable project?
+- [MERN Setup Guide](./MERN_SETUP.md) - Detailed setup instructions
+- [Admin Dashboard](./ADMIN_DASHBOARD.md) - Admin features documentation
+
+## 🔐 Security
+
+- JWT token authentication
+- Password hashing with bcrypt
+- Role-based access control
+- Input validation
+- Rate limiting
+- CORS protection
+
+## 🚢 Deployment
+
+### Frontend (Vercel/Netlify)
+```bash
+cd frontend
+npm run build
+```
+
+### Backend (Heroku/Railway/DigitalOcean)
+```bash
+cd backend
+npm start
+```
+
+### Database (MongoDB Atlas)
+Update `MONGODB_URI` in backend/.env with Atlas connection string
+
+## 📝 Environment Variables
+
+### Backend Required
+- `MONGODB_URI` - MongoDB connection string
+- `JWT_SECRET` - Secret key for JWT
+- `PORT` - Server port (default: 5000)
+- `CLIENT_URL` - Frontend URL
+
+### Backend Optional
+- `CLOUDINARY_*` - Image upload credentials
+- `STRIPE_SECRET_KEY` - Stripe integration
+- `MPESA_*` - M-Pesa integration credentials
+
+### Frontend Required
+- `VITE_API_URL` - Backend API URL
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+## 📄 License
+
+This project is licensed under the ISC License.
+
+## 👨‍💻 Author
+
+Brandon - [Brandon05-dev](https://github.com/Brandon05-dev)
+
+## 🙏 Acknowledgments
+
+- Shadcn/ui for beautiful components
+- TanStack Query for data management
+- MongoDB for database
+- All open source contributors
+
+---
+
+**Frontend:** http://localhost:5173  
+**Backend API:** http://localhost:5000  
+**Admin Dashboard:** http://localhost:5173/admin
 
 Yes, you can!
 

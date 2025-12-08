@@ -64,16 +64,39 @@ const HeroSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Hero Image */}
+          {/* Hero Images Showcase */}
           <div className="relative lg:h-[600px] animate-fade-in" style={{ animationDelay: '0.3s' }}>
             <div className="relative z-10">
-              {/* Main Product Showcase */}
-              <div className="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800"
-                  alt="MacBook Pro"
-                  className="w-full max-w-lg mx-auto rounded-3xl shadow-2xl hover-scale"
-                />
+              {/* Hero Images Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                {/* Main Featured Image */}
+                <div className="md:col-span-2 relative group overflow-hidden rounded-2xl shadow-2xl">
+                  <img
+                    src="/hero images/hero 1.png"
+                    alt="Featured Electronics"
+                    className="w-full h-[300px] md:h-[350px] object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+                
+                {/* Secondary Images */}
+                <div className="relative group overflow-hidden rounded-xl shadow-lg">
+                  <img
+                    src="/hero images/hero 2.png"
+                    alt="Premium Tech"
+                    className="w-full h-[200px] object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+                
+                <div className="relative group overflow-hidden rounded-xl shadow-lg">
+                  <img
+                    src="/hero images/hero 3.png"
+                    alt="Latest Gadgets"
+                    className="w-full h-[200px] object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
               </div>
             </div>
           </div>

@@ -74,48 +74,6 @@ const HeroSection: React.FC = () => {
                   alt="MacBook Pro"
                   className="w-full max-w-lg mx-auto rounded-3xl shadow-2xl hover-scale"
                 />
-                
-                {/* Floating Cards */}
-                <div className="absolute -left-4 lg:-left-12 top-1/4 glass-card p-4 shadow-xl animate-float hidden sm:block">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                      <Zap className="h-6 w-6 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm">MacBook Pro M3</p>
-                      <p className="text-primary font-bold">KSh 349,999</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute -right-4 lg:-right-8 bottom-1/4 glass-card p-4 shadow-xl animate-float hidden sm:block" style={{ animationDelay: '2s' }}>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src="https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=100"
-                      alt="iPhone"
-                      className="w-12 h-12 rounded-xl object-cover"
-                    />
-                    <div>
-                      <p className="font-semibold text-sm">iPhone 15 Pro</p>
-                      <p className="text-xs text-muted-foreground">Just arrived!</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stats Badge */}
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 glass-card px-6 py-3 shadow-xl">
-                  <div className="flex items-center gap-6">
-                    <div className="text-center">
-                      <p className="font-display font-bold text-xl text-primary">50K+</p>
-                      <p className="text-xs text-muted-foreground">Happy Customers</p>
-                    </div>
-                    <div className="w-px h-10 bg-border" />
-                    <div className="text-center">
-                      <p className="font-display font-bold text-xl text-primary">4.9★</p>
-                      <p className="text-xs text-muted-foreground">Rating</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

@@ -55,6 +55,8 @@ const AdminOrders: React.FC = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  console.log('Admin Orders - Rendering:', { isLoading, error, ordersCount: orders.length });
+
   /**
    * Fetch orders with filters
    */
@@ -63,22 +65,29 @@ const AdminOrders: React.FC = () => {
       setIsLoading(true);
       setError('');
       
+      console.log('Fetching admin orders...');
       const response = await adminOrderAPI.getOrders({
         page: currentPage,
         limit: 10,
         status: statusFilter,
         search: searchTerm
       });
+      console.log('Orders response:', response);
       
       if (response.success) {
-        setOrders(response.data.orders);
-        setTotalPages(response.data.pagination.totalPages);
+        setOrders(response.data.orders || []);
+        setTotalPages(response.data.pagination?.totalPages || 1);
       } else {
         setError(response.message || 'Failed to fetch orders');
       }
     } catch (err: any) {
       console.error('Fetch orders error:', err);
-      setError(err.response?.data?.message || 'Failed to load orders');
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to load orders';
+      setError(errorMsg);
+      
+      if (err.response?.status === 401) {
+        setError('Session expired. Please login again.');
+      }
     } finally {
       setIsLoading(false);
     }

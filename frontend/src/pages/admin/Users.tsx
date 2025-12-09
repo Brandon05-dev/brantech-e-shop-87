@@ -57,6 +57,8 @@ const AdminUsers: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  console.log('Admin Users - Rendering:', { isLoading, error, usersCount: users.length });
+
   /**
    * Fetch users with filters
    */
@@ -65,22 +67,29 @@ const AdminUsers: React.FC = () => {
       setIsLoading(true);
       setError('');
       
+      console.log('Fetching admin users...');
       const response = await adminUserAPI.getUsers({
         page: currentPage,
         limit: 20,
         role: roleFilter,
         search: searchTerm
       });
+      console.log('Users response:', response);
       
       if (response.success) {
-        setUsers(response.data.users);
-        setTotalPages(response.data.pagination.totalPages);
+        setUsers(response.data.users || []);
+        setTotalPages(response.data.pagination?.totalPages || 1);
       } else {
         setError(response.message || 'Failed to fetch users');
       }
     } catch (err: any) {
       console.error('Fetch users error:', err);
-      setError(err.response?.data?.message || 'Failed to load users');
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to load users';
+      setError(errorMsg);
+      
+      if (err.response?.status === 401) {
+        setError('Session expired. Please login again.');
+      }
     } finally {
       setIsLoading(false);
     }

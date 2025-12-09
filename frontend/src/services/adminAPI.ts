@@ -135,6 +135,25 @@ export const adminAuthAPI = {
   },
 
   /**
+   * Refresh access token using refresh token cookie
+   * @returns {Promise} - Returns new access token
+   */
+  refreshToken: async () => {
+    const response = await axios.post(
+      `${API_URL}/admin/refresh-token`,
+      {},
+      { withCredentials: true }
+    );
+    
+    // Store new access token in memory
+    if (response.data.success && response.data.data.accessToken) {
+      setAdminToken(response.data.data.accessToken);
+    }
+    
+    return response.data;
+  },
+
+  /**
    * Get current admin profile
    */
   getProfile: async () => {

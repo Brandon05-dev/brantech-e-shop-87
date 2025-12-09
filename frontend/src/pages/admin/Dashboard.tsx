@@ -24,6 +24,8 @@ const AdminDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+  console.log('Admin Dashboard - Rendering:', { isLoading, error, hasStats: !!stats });
+
   /**
    * Fetch dashboard statistics
    */
@@ -32,7 +34,9 @@ const AdminDashboard: React.FC = () => {
       setIsLoading(true);
       setError('');
       
+      console.log('Fetching admin dashboard stats...');
       const response = await adminDashboardAPI.getStats();
+      console.log('Dashboard stats response:', response);
       
       if (response.success) {
         setStats(response.data);
@@ -41,7 +45,14 @@ const AdminDashboard: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Dashboard stats error:', err);
-      setError(err.response?.data?.message || 'Failed to load dashboard data');
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to load dashboard data';
+      console.error('Error details:', errorMsg);
+      setError(errorMsg);
+      
+      // If unauthorized, might need to re-login
+      if (err.response?.status === 401) {
+        setError('Session expired. Please login again.');
+      }
     } finally {
       setIsLoading(false);
     }

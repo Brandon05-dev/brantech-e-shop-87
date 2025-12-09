@@ -94,15 +94,23 @@ const AdminProducts: React.FC = () => {
         category: categoryFilter
       });
       
+      console.log('Admin products response:', response);
+      
       if (response.success) {
-        setProducts(response.data.products);
-        setTotalPages(response.data.pagination.totalPages);
+        setProducts(response.data.products || []);
+        setTotalPages(response.data.pagination?.totalPages || 1);
       } else {
         setError(response.message || 'Failed to fetch products');
       }
     } catch (err: any) {
       console.error('Fetch products error:', err);
-      setError(err.response?.data?.message || 'Failed to load products');
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to load products';
+      setError(errorMsg);
+      
+      // If unauthorized, might need to re-login
+      if (err.response?.status === 401) {
+        setError('Session expired. Please login again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -235,6 +243,14 @@ const AdminProducts: React.FC = () => {
       minimumFractionDigits: 0
     }).format(amount);
   };
+
+  console.log('Admin Products Page - State:', { 
+    isLoading, 
+    error, 
+    productsCount: products.length,
+    currentPage,
+    totalPages 
+  });
 
   return (
     <>

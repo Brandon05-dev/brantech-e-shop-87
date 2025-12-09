@@ -39,19 +39,41 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
    * Called on app load and after login
    */
   const checkAuth = async () => {
-    // If no token in memory, not authenticated
-    if (!getAdminToken()) {
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      // Try to get admin profile with current token
+      console.log('Checking admin authentication...', { hasToken: !!getAdminToken() });
+      
+      // If no token in memory, try to refresh using the refresh token cookie
+      if (!getAdminToken()) {
+        console.log('No access token in memory, attempting token refresh...');
+        try {
+          const refreshResponse = await adminAuthAPI.refreshToken();
+          if (refreshResponse.success && refreshResponse.data.accessToken) {
+            console.log('✅ Token refreshed successfully');
+            // Token is automatically set by adminAuthAPI.refreshToken
+            // Now try to get profile
+            const profileResponse = await adminAuthAPI.getProfile();
+            if (profileResponse.success && profileResponse.data) {
+              setAdmin(profileResponse.data);
+              setIsAuthenticated(true);
+              console.log('✅ Admin authenticated via refresh token');
+              return;
+            }
+          }
+        } catch (refreshError) {
+          console.log('Token refresh failed, user needs to login');
+        }
+        
+        setIsLoading(false);
+        return;
+      }
+
+      // If we have a token, try to get admin profile
       const response = await adminAuthAPI.getProfile();
       
       if (response.success && response.data) {
         setAdmin(response.data);
         setIsAuthenticated(true);
+        console.log('✅ Admin authenticated with existing token');
       }
     } catch (error) {
       // Token is invalid or expired

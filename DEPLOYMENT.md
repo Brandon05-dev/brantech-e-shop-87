@@ -22,6 +22,27 @@ After logging in, admin can access:
 - Products: `/admin/products` - Create, edit, delete products
 - Orders: `/admin/orders` - Manage customer orders
 - Users: `/admin/users` - Manage user accounts and roles
+- Profile: `/admin/profile` - Update profile and change password
+
+## 🔒 Change Default Password
+
+**IMPORTANT:** Change the default password immediately after first login!
+
+1. Login to admin dashboard
+2. Click your profile icon (top right)
+3. Select "My Profile"
+4. Scroll to "Change Password" section
+5. Enter current password: `admin123`
+6. Enter new secure password (min 6 characters)
+7. Confirm new password
+8. Click "Change Password"
+
+**Password Security Tips:**
+- Use at least 8-12 characters
+- Mix uppercase and lowercase letters
+- Include numbers and special symbols
+- Don't reuse passwords from other sites
+- Never share your admin credentials
 
 ## Environment Variables Configuration
 

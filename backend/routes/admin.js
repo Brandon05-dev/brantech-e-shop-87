@@ -28,6 +28,10 @@ import {
   deleteOrder,
   getOrderStats
 } from '../controllers/adminOrderController.js';
+import {
+  updateAdminPassword,
+  updateAdminProfile
+} from '../controllers/adminProfileController.js';
 import { adminProtect } from '../middleware/adminAuth.js';
 
 const router = express.Router();
@@ -64,6 +68,16 @@ router.post('/logout', adminProtect, adminLogout);
 // @desc    Get current admin profile
 // @access  Private (Admin)
 router.get('/me', adminProtect, getAdminProfile);
+
+// @route   PUT /api/admin/profile
+// @desc    Update admin profile (name, email)
+// @access  Private (Admin)
+router.put('/profile', adminProtect, updateAdminProfile);
+
+// @route   PUT /api/admin/profile/password
+// @desc    Update admin password
+// @access  Private (Admin)
+router.put('/profile/password', adminProtect, updateAdminPassword);
 
 /**
  * ========================================

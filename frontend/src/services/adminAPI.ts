@@ -159,6 +159,24 @@ export const adminAuthAPI = {
   getProfile: async () => {
     const response = await adminAPI.get('/me');
     return response.data;
+  },
+
+  /**
+   * Update admin profile (name, email)
+   * @param {Object} data - { name, email }
+   */
+  updateProfile: async (data) => {
+    const response = await adminAPI.put('/profile', data);
+    return response.data;
+  },
+
+  /**
+   * Change admin password
+   * @param {Object} data - { currentPassword, newPassword }
+   */
+  changePassword: async (data) => {
+    const response = await adminAPI.put('/profile/password', data);
+    return response.data;
   }
 };
 

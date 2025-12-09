@@ -1,55 +1,74 @@
-import jwt from 'jsonwebtoken';
-import { validationResult } from 'express-validator';
 import User from '../models/User.js';
+import { validationResult } from 'express-validator';
 
-// Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
-  });
-};
-
-// @desc    Register user
+// @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
 export const register = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const { name, email, password, phone } = req.body;
-
   try {
-    // Check if user exists
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ message: 'User already exists' });
+    // Check validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array().map(err => ({
+          field: err.path,
+          message: err.msg
+        }))
+      });
     }
 
-    // Create user
-    user = await User.create({
-      name,
-      email,
-      password,
-      phone
+    const { name, email, password } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already registered. Please login instead.'
+      });
+    }
+
+    // Create new user
+    const user = new User({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password
     });
 
-    // Create token
-    const token = generateToken(user._id);
+    await user.save();
+
+    // Generate token
+    const token = user.generateAuthToken();
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    console.log('✅ User registered successfully:', user.email);
 
     res.status(201).json({
       success: true,
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
+      message: 'Registration successful',
+      data: {
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar
+        }
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('❌ Registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -57,56 +76,120 @@ export const register = async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 export const login = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const { email, password } = req.body;
-
   try {
-    // Check for user
-    const user = await User.findOne({ email }).select('+password');
+    // Check validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array().map(err => ({
+          field: err.path,
+          message: err.msg
+        }))
+      });
+    }
+
+    const { email, password } = req.body;
+
+    // Find user with password
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
     }
 
-    // Check password
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact support.'
+      });
     }
 
-    // Create token
-    const token = generateToken(user._id);
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Generate token
+    const token = user.generateAuthToken();
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    console.log('✅ User logged in successfully:', user.email);
 
     res.json({
       success: true,
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
+      message: 'Login successful',
+      data: {
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar
+        }
       }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('❌ Login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Login failed. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
-// @desc    Get current user
+// @desc    Get current logged in user
 // @route   GET /api/auth/me
 // @access  Private
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('wishlist');
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
     res.json({
       success: true,
-      data: user
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          phone: user.phone,
+          address: user.address,
+          isEmailVerified: user.isEmailVerified,
+          createdAt: user.createdAt
+        }
+      }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('❌ Get user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user data',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -115,37 +198,70 @@ export const getMe = async (req, res) => {
 // @access  Private
 export const updateProfile = async (req, res) => {
   try {
+    const { name, phone, address } = req.body;
+
     const user = await User.findById(req.user.id);
 
-    if (user) {
-      user.name = req.body.name || user.name;
-      user.email = req.body.email || user.email;
-      user.phone = req.body.phone || user.phone;
-      
-      if (req.body.address) {
-        user.address = req.body.address;
-      }
-
-      if (req.body.password) {
-        user.password = req.body.password;
-      }
-
-      const updatedUser = await user.save();
-
-      res.json({
-        success: true,
-        data: {
-          id: updatedUser._id,
-          name: updatedUser.name,
-          email: updatedUser.email,
-          phone: updatedUser.phone,
-          role: updatedUser.role
-        }
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
       });
-    } else {
-      res.status(404).json({ message: 'User not found' });
     }
+
+    // Update fields
+    if (name) user.name = name.trim();
+    if (phone) user.phone = phone.trim();
+    if (address) user.address = { ...user.address, ...address };
+
+    await user.save();
+
+    console.log('✅ Profile updated successfully:', user.email);
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          phone: user.phone,
+          address: user.address
+        }
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('❌ Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
+export const logout = async (req, res) => {
+  try {
+    // In a stateless JWT system, logout is handled client-side
+    // But we can log the action
+    console.log('✅ User logged out:', req.user.email);
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    console.error('❌ Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Logout failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };

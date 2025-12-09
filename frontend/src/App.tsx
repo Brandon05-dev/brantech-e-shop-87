@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { CartProvider } from "@/contexts/CartContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminProvider } from "@/contexts/AdminContext";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 
 // Store pages
@@ -15,27 +17,32 @@ import Cart from "./pages/Cart";
 import Wishlist from "./pages/Wishlist";
 import Auth from "./pages/Auth";
 import Checkout from "./pages/Checkout";
+import Profile from "./pages/Profile";
+import MyOrders from "./pages/MyOrders";
+import OrderTracking from "./pages/OrderTracking";
 import NotFound from "./pages/NotFound";
 
-// Admin pages
-import AdminLayout from "./pages/admin/AdminLayout";
-import Dashboard from "./pages/admin/Dashboard";
-import ProductsManagement from "./pages/admin/ProductsManagement";
-import OrdersManagement from "./pages/admin/OrdersManagement";
-import Customers from "./pages/admin/Customers";
-import Analytics from "./pages/admin/Analytics";
-import Settings from "./pages/admin/Settings";
+// Admin pages - Completely separate admin system
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminLayout from "./components/admin/AdminLayout";
+import ProtectedAdminRoute from "./components/admin/ProtectedAdminRoute";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminProducts from "./pages/admin/Products";
+import AdminOrders from "./pages/admin/Orders";
+import AdminUsers from "./pages/admin/Users";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <AuthProvider>
+        <AdminProvider>
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+            <BrowserRouter>
             <Routes>
               {/* Store Routes */}
               <Route path="/" element={<Index />} />
@@ -45,23 +52,38 @@ const App = () => (
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/orders" element={<MyOrders />} />
+              <Route path="/track-order" element={<OrderTracking />} />
+              <Route path="/track-order/:orderId" element={<OrderTracking />} />
 
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Dashboard />} />
-                <Route path="products" element={<ProductsManagement />} />
-                <Route path="orders" element={<OrdersManagement />} />
-                <Route path="customers" element={<Customers />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="settings" element={<Settings />} />
+              {/* Admin Routes - Completely Separate System */}
+              {/* Public admin login */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              
+              {/* Protected admin routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminLayout />
+                  </ProtectedAdminRoute>
+                }
+              >
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="users" element={<AdminUsers />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-          <VercelAnalytics />
-        </TooltipProvider>
-      </CartProvider>
+            </BrowserRouter>
+            <VercelAnalytics />
+            </TooltipProvider>
+          </CartProvider>
+        </AdminProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </HelmetProvider>
 );

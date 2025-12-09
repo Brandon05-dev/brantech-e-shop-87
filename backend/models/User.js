@@ -1,29 +1,33 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Please add a name'],
-    trim: true
+    required: [true, 'Name is required'],
+    trim: true,
+    minlength: [2, 'Name must be at least 2 characters'],
+    maxlength: [50, 'Name cannot exceed 50 characters']
   },
   email: {
     type: String,
-    required: [true, 'Please add an email'],
+    required: [true, 'Email is required'],
     unique: true,
     lowercase: true,
     trim: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please add a valid email']
+    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
   },
   password: {
     type: String,
-    required: [true, 'Please add a password'],
-    minlength: 6,
+    required: [true, 'Password is required'],
+    minlength: [6, 'Password must be at least 6 characters'],
     select: false
   },
   phone: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   role: {
     type: String,
@@ -32,13 +36,13 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    default: ''
+    default: 'https://via.placeholder.com/150'
   },
   address: {
-    street: String,
-    city: String,
-    county: String,
-    postalCode: String
+    street: { type: String, default: '' },
+    city: { type: String, default: '' },
+    county: { type: String, default: '' },
+    postalCode: { type: String, default: '' }
   },
   wishlist: [{
     type: mongoose.Schema.Types.ObjectId,
@@ -52,24 +56,64 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
   resetPasswordToken: String,
-  resetPasswordExpire: Date
+  resetPasswordExpire: Date,
+  lastLogin: {
+    type: Date,
+    default: null
+  }
 }, {
   timestamps: true
 });
 
-// Encrypt password before saving
+// Hash password before saving
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
-    next();
+    return next();
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
-// Match password
-userSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+// Compare password method
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw new Error('Password comparison failed');
+  }
+};
+
+// Generate JWT token
+userSchema.methods.generateAuthToken = function() {
+  return jwt.sign(
+    { 
+      id: this._id, 
+      email: this.email, 
+      role: this.role 
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRE || '30d' }
+  );
+};
+
+// Get user data without sensitive info
+userSchema.methods.toJSON = function() {
+  const user = this.toObject();
+  delete user.password;
+  delete user.resetPasswordToken;
+  delete user.resetPasswordExpire;
+  return user;
 };
 
 const User = mongoose.model('User', userSchema);

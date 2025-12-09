@@ -101,8 +101,11 @@ const orderSchema = new mongoose.Schema({
     default: false
   },
   deliveredAt: Date,
+  shippedAt: Date,
   trackingNumber: String,
-  notes: String
+  estimatedDelivery: Date,
+  notes: String,
+  courierService: String
 }, {
   timestamps: true
 });

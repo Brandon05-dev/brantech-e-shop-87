@@ -5,7 +5,8 @@ import {
   getOrder,
   updateOrderStatus,
   getUserOrders,
-  deleteOrder
+  deleteOrder,
+  trackOrder
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/auth.js';
 
@@ -16,6 +17,9 @@ router.route('/')
   .get(protect, admin, getOrders);
 
 router.get('/myorders', protect, getUserOrders);
+
+// Public tracking route (no auth required)
+router.get('/track/:orderNumber', trackOrder);
 
 router.route('/:id')
   .get(protect, getOrder)

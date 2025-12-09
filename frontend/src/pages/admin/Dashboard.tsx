@@ -1,387 +1,331 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  DollarSign,
-  ShoppingCart,
-  Users,
-  Package,
+import { Helmet } from 'react-helmet-async';
+import { adminDashboardAPI } from '../../services/adminAPI';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { 
+  Users, 
+  Package, 
+  ShoppingCart, 
+  DollarSign, 
   TrendingUp,
-  ArrowRight,
-  ArrowUpRight,
-  ArrowDownRight,
-  Activity,
   AlertTriangle,
-  CheckCircle,
   Clock,
-  Filter,
-  Download,
-  RefreshCw,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
-import StatsCard from '@/components/admin/StatsCard';
-import { Button } from '@/components/ui/button';
-import { orders, getOrderStatusColor } from '@/data/orders';
-import { products } from '@/data/products';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { toast } from 'sonner';
 
-const Dashboard: React.FC = () => {
-  const [timeRange, setTimeRange] = useState('30d');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [realtimeOrders, setRealtimeOrders] = useState(orders.length);
+/**
+ * Admin Dashboard Page
+ * Shows key metrics and statistics for the e-commerce platform
+ */
+const AdminDashboard: React.FC = () => {
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) {
-        setRealtimeOrders(prev => prev + 1);
+  /**
+   * Fetch dashboard statistics
+   */
+  const fetchStats = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      const response = await adminDashboardAPI.getStats();
+      
+      if (response.success) {
+        setStats(response.data);
+      } else {
+        setError(response.message || 'Failed to fetch dashboard statistics');
       }
-    }, 5000);
-    return () => clearInterval(interval);
+    } catch (err: any) {
+      console.error('Dashboard stats error:', err);
+      setError(err.response?.data?.message || 'Failed to load dashboard data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
   }, []);
 
-  const totalRevenue = orders
-    .filter((o) => o.status !== 'cancelled')
-    .reduce((sum, o) => sum + o.total, 0);
-  
-  const totalOrders = realtimeOrders;
-  const totalProducts = products.length;
-  const lowStockProducts = products.filter((p) => p.stock < 10).length;
-  const pendingOrders = orders.filter((o) => o.status === 'pending').length;
-  const processingOrders = orders.filter((o) => o.status === 'processing').length;
-
-  const formatPrice = (price: number) => {
+  /**
+   * Format currency
+   */
+  const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
       currency: 'KES',
-      minimumFractionDigits: 0,
-      notation: 'compact',
-    }).format(price);
+      minimumFractionDigits: 0
+    }).format(amount);
   };
 
-  const recentOrders = orders.slice(0, 5);
+  /**
+   * Loading State
+   */
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Mock chart data
-  const revenueData = [
-    { month: 'Jan', revenue: 450000 },
-    { month: 'Feb', revenue: 520000 },
-    { month: 'Mar', revenue: 480000 },
-    { month: 'Apr', revenue: 610000 },
-    { month: 'May', revenue: 590000 },
-    { month: 'Jun', revenue: 720000 },
-  ];
+  /**
+   * Error State
+   */
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
 
-  const maxRevenue = Math.max(...revenueData.map((d) => d.revenue));
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast.success('Dashboard refreshed');
-    }, 1000);
-  };
-
-  const handleExport = () => {
-    toast.success('Exporting data...');
-  };
-
+  /**
+   * Main Dashboard Render
+   */
   return (
-    <div className="space-y-8">
-      {/* Header with Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <>
+      <Helmet>
+        <title>Admin Dashboard - Brantech E-Shop</title>
+      </Helmet>
+
+      <div className="space-y-6">
+        {/* Page Header */}
         <div>
-          <h1 className="font-display text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back! Here's what's happening with your store.
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome back! Here's an overview of your e-commerce platform.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="1y">Last year</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="icon" onClick={handleRefresh}>
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </Button>
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-        <StatsCard
-          title="Total Revenue"
-          value={formatPrice(totalRevenue)}
-          change="+12.5% from last month"
-          changeType="positive"
-          icon={DollarSign}
-        />
-        <StatsCard
-          title="Total Orders"
-          value={totalOrders}
-          change="+8.2% from last month"
-          changeType="positive"
-          icon={ShoppingCart}
-        />
-        <StatsCard
-          title="Total Products"
-          value={totalProducts}
-          change={`${lowStockProducts} low stock`}
-          changeType="neutral"
-          icon={Package}
-        />
-        <StatsCard
-          title="Customers"
-          value="1,234"
-          change="+4.7% from last month"
-          changeType="positive"
-          icon={Users}
-        />
-      </div>
+        {/* Overview Stats - Main Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Users */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Users
+              </CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats?.overview?.totalUsers || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Registered customers
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Order Status Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Clock className="h-5 w-5 text-yellow-500" />
-            <span className="text-2xl font-bold">{pendingOrders}</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Pending</p>
-          <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-yellow-500" style={{ width: '45%' }} />
-          </div>
-        </div>
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Activity className="h-5 w-5 text-blue-500" />
-            <span className="text-2xl font-bold">{processingOrders}</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Processing</p>
-          <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500" style={{ width: '65%' }} />
-          </div>
-        </div>
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <Package className="h-5 w-5 text-purple-500" />
-            <span className="text-2xl font-bold">{orders.filter((o) => o.status === 'shipped').length}</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Shipped</p>
-          <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-purple-500" style={{ width: '80%' }} />
-          </div>
-        </div>
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            <span className="text-2xl font-bold">{orders.filter((o) => o.status === 'delivered').length}</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Delivered</p>
-          <div className="mt-2 h-1 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-green-500" style={{ width: '100%' }} />
-          </div>
-        </div>
-      </div>
+          {/* Total Products */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Products
+              </CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats?.overview?.totalProducts || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                In inventory
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Quick Actions Alert */}
-      {(pendingOrders > 0 || lowStockProducts > 0) && (
-        <div className="glass-card p-4 border-l-4 border-yellow-500">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
-            <div className="flex-1">
-              <h3 className="font-semibold mb-1">Action Required</h3>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                {pendingOrders > 0 && (
-                  <p>• {pendingOrders} pending orders need attention</p>
-                )}
-                {lowStockProducts > 0 && (
-                  <p>• {lowStockProducts} products are running low on stock</p>
-                )}
+          {/* Total Orders */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Orders
+              </CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats?.overview?.totalOrders || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                All time
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Total Revenue */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Total Revenue
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {formatCurrency(stats?.overview?.totalRevenue || 0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Avg: {formatCurrency(stats?.overview?.averageOrderValue || 0)} per order
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Order Status Breakdown */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Orders by Status</CardTitle>
+            <CardDescription>Current order distribution across statuses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {/* Pending */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
+                <Clock className="h-8 w-8 text-yellow-600 dark:text-yellow-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats?.ordersByStatus?.pending || 0}</p>
+                  <p className="text-xs text-muted-foreground">Pending</p>
+                </div>
+              </div>
+
+              {/* Processing */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20">
+                <TrendingUp className="h-8 w-8 text-blue-600 dark:text-blue-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats?.ordersByStatus?.processing || 0}</p>
+                  <p className="text-xs text-muted-foreground">Processing</p>
+                </div>
+              </div>
+
+              {/* Shipped */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-purple-50 dark:bg-purple-950/20">
+                <Package className="h-8 w-8 text-purple-600 dark:text-purple-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats?.ordersByStatus?.shipped || 0}</p>
+                  <p className="text-xs text-muted-foreground">Shipped</p>
+                </div>
+              </div>
+
+              {/* Delivered */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20">
+                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats?.ordersByStatus?.delivered || 0}</p>
+                  <p className="text-xs text-muted-foreground">Delivered</p>
+                </div>
+              </div>
+
+              {/* Cancelled */}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/20">
+                <XCircle className="h-8 w-8 text-red-600 dark:text-red-500" />
+                <div>
+                  <p className="text-2xl font-bold">{stats?.ordersByStatus?.cancelled || 0}</p>
+                  <p className="text-xs text-muted-foreground">Cancelled</p>
+                </div>
               </div>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/admin/orders">Review</Link>
-            </Button>
-          </div>
-        </div>
-      )}
+          </CardContent>
+        </Card>
 
-      {/* Charts & Recent Orders */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Revenue Chart */}
-        <div className="lg:col-span-2 glass-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="font-display text-xl font-bold">Revenue Overview</h2>
-              <p className="text-sm text-muted-foreground">Monthly revenue trend</p>
-            </div>
-            <div className="flex items-center gap-2 text-green-500">
-              <TrendingUp className="h-4 w-4" />
-              <span className="text-sm font-medium">+23.5%</span>
-            </div>
-          </div>
-
-          {/* Simple Bar Chart */}
-          <div className="flex items-end justify-between gap-2 h-48">
-            {revenueData.map((data, index) => (
-              <div key={data.month} className="flex-1 flex flex-col items-center gap-2 group">
-                <div className="relative w-full">
-                  <div
-                    className="w-full bg-primary rounded-t-lg transition-all duration-500 hover:opacity-80 cursor-pointer"
-                    style={{
-                      height: `${(data.revenue / maxRevenue) * 180}px`,
-                      animationDelay: `${index * 0.1}s`,
-                    }}
-                  />
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background text-xs px-2 py-1 rounded whitespace-nowrap">
-                    {formatPrice(data.revenue)}
-                  </div>
-                </div>
-                <span className="text-xs text-muted-foreground font-medium">{data.month}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Orders */}
-        <div className="glass-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display text-xl font-bold">Recent Orders</h2>
-            <Link to="/admin/orders">
-              <Button variant="ghost" size="sm">
-                View All
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="space-y-4">
-            {recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium text-sm truncate">{order.customer.name}</p>
-                  <p className="text-xs text-muted-foreground">{order.orderNumber}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-sm">
-                    {new Intl.NumberFormat('en-KE', {
-                      style: 'currency',
-                      currency: 'KES',
-                      minimumFractionDigits: 0,
-                    }).format(order.total)}
-                  </p>
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded text-xs font-medium capitalize ${getOrderStatusColor(
-                      order.status
-                    )}`}
-                  >
-                    {order.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Top Products & Low Stock */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Top Selling Products */}
-        <div className="glass-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display text-xl font-bold">Top Products</h2>
-            <Link to="/admin/products">
-              <Button variant="ghost" size="sm">
-                View All
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-
-          <div className="space-y-4">
-            {products.filter((p) => p.bestseller).slice(0, 4).map((product, index) => (
-              <div key={product.id} className="flex items-center gap-4">
-                <span className="text-lg font-bold text-muted-foreground w-6">
-                  {index + 1}
-                </span>
-                <img
-                  src={product.images[0]}
-                  alt={product.name}
-                  className="w-12 h-12 rounded-lg object-cover bg-secondary"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{product.name}</p>
-                  <p className="text-xs text-muted-foreground">{product.brand}</p>
-                </div>
-                <div className="flex items-center gap-1 text-green-500">
-                  <ArrowUpRight className="h-4 w-4" />
-                  <span className="text-sm font-medium">+{12 + index * 3}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Low Stock Alert */}
-        <div className="glass-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display text-xl font-bold">Low Stock Alert</h2>
-            <span className="px-2 py-1 rounded bg-destructive/10 text-destructive text-xs font-bold">
-              {lowStockProducts} items
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            {products.filter((p) => p.stock < 30).slice(0, 4).map((product) => (
-              <div key={product.id} className="flex items-center gap-4">
-                <img
-                  src={product.images[0]}
-                  alt={product.name}
-                  className="w-12 h-12 rounded-lg object-cover bg-secondary"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{product.name}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          product.stock < 10
-                            ? 'bg-destructive'
-                            : product.stock < 20
-                            ? 'bg-yellow-500'
-                            : 'bg-primary'
-                        }`}
-                        style={{ width: `${Math.min((product.stock / 100) * 100, 100)}%` }}
-                      />
+        {/* Recent Orders and Low Stock */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Orders */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Orders</CardTitle>
+              <CardDescription>Last 5 orders placed</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats?.recentOrders && stats.recentOrders.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.recentOrders.map((order: any) => (
+                    <div key={order._id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{order.orderNumber}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {order.user?.name || 'Guest'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{formatCurrency(order.totalAmount)}</p>
+                        <p className={`text-xs px-2 py-1 rounded-full inline-block ${
+                          order.status === 'delivered' ? 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400' :
+                          order.status === 'shipped' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400' :
+                          order.status === 'processing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400' :
+                          order.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400' :
+                          'bg-yellow-100 text-yellow-700 dark:bg-yellow-950/50 dark:text-yellow-400'
+                        }`}>
+                          {order.status}
+                        </p>
+                      </div>
                     </div>
-                    <span className="text-xs text-muted-foreground">{product.stock} left</span>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">No recent orders</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Low Stock Products */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                Low Stock Alert
+              </CardTitle>
+              <CardDescription>Products with less than 10 units</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats?.lowStockProducts && stats.lowStockProducts.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.lowStockProducts.map((product: any) => (
+                    <div key={product._id} className="flex items-center gap-3 p-3 border rounded-lg">
+                      <img 
+                        src={product.image} 
+                        alt={product.name}
+                        className="h-12 w-12 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatCurrency(product.price)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-lg font-bold ${
+                          product.stock === 0 ? 'text-red-600' :
+                          product.stock < 5 ? 'text-orange-600' :
+                          'text-yellow-600'
+                        }`}>
+                          {product.stock}
+                        </p>
+                        <p className="text-xs text-muted-foreground">in stock</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  All products have sufficient stock
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
-export default Dashboard;
+export default AdminDashboard;

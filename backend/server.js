@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 import errorHandler from './middleware/errorHandler.js';
 
@@ -16,6 +17,7 @@ import categoryRoutes from './routes/categories.js';
 import reviewRoutes from './routes/reviews.js';
 import uploadRoutes from './routes/upload.js';
 import paymentRoutes from './routes/payment.js';
+import adminRoutes from './routes/admin.js';
 
 // Load env vars
 dotenv.config();
@@ -30,11 +32,12 @@ app.use(helmet());
 app.use(compression());
 app.use(morgan('dev'));
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:8080',
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // Parse cookies for admin refresh tokens
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -45,6 +48,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/admin', adminRoutes); // Admin routes - completely separate from user routes
 
 // Health check
 app.get('/api/health', (req, res) => {

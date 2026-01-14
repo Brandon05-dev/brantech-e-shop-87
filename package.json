@@ -11,7 +11,13 @@
     "build:frontend": "cd frontend && npm run build",
     "install:all": "cd frontend && npm install && cd ../backend && npm install"
   },
-  "keywords": ["ecommerce", "mern", "react", "mongodb", "express"],
+  "keywords": [
+    "ecommerce",
+    "mern",
+    "react",
+    "mongodb",
+    "express"
+  ],
   "author": "Brandon",
   "license": "ISC"
 }

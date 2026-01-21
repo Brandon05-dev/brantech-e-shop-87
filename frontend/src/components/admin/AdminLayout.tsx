@@ -21,6 +21,7 @@ import {
   X,
   Shield,
   Home,
+  User,
 } from 'lucide-react';
 
 /**

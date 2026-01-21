@@ -42,6 +42,10 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Raw body parser for Paystack webhooks (must come before JSON parser)
+app.use('/api/payment/paystack-webhook', express.raw({ type: 'application/json' }));
+
 app.use(cookieParser()); // Parse cookies for admin refresh tokens
 
 // Routes

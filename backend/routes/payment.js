@@ -3,7 +3,9 @@ import {
   initiateMpesaPayment,
   mpesaCallback,
   initializePaystackPayment,
-  verifyPaystackPayment
+  verifyPaystackPayment,
+  paystackPaymentSuccess,
+  paystackWebhook
 } from '../controllers/paymentController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -13,5 +15,9 @@ router.post('/mpesa/initiate', protect, initiateMpesaPayment);
 router.post('/mpesa/callback', mpesaCallback);
 router.post('/paystack/initialize', protect, initializePaystackPayment);
 router.post('/verify-payment', verifyPaystackPayment);
+
+// Paystack callback and webhook routes
+router.get('/payment-success', paystackPaymentSuccess);
+router.post('/paystack-webhook', paystackWebhook);
 
 export default router;

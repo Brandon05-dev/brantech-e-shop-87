@@ -22,7 +22,6 @@ import { toast } from 'sonner';
 const Checkout: React.FC = () => {
   const { items, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [shippingInfo, setShippingInfo] = useState({
@@ -46,26 +45,41 @@ const Checkout: React.FC = () => {
   const shippingCost = cartTotal >= 10000 ? 0 : 500;
   const total = cartTotal + shippingCost;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
-
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    if (paymentMethod === 'mpesa') {
-      toast.success('STK Push sent to your phone. Please enter your M-Pesa PIN.');
-    } else {
-      toast.success('Payment processed successfully!');
+  const payWithPaystack = () => {
+    if (!shippingInfo.email) {
+      toast.error('Please enter your email address');
+      return;
     }
 
-    // Simulate order completion
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    clearCart();
-    toast.success('Order placed successfully!');
-    navigate('/');
-    setIsProcessing(false);
+    const handler = (window as any).PaystackPop.setup({
+      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY, // Paystack public key from environment
+      email: shippingInfo.email,
+      amount: total * 100, // Amount in cents (sub-units)
+      currency: 'KES',
+      ref: 'BRAN' + Math.floor((Math.random() * 1000000000) + 1), // Unique reference
+      callback: function(response: any) {
+        // Payment successful
+        toast.success('Payment successful! Reference: ' + response.reference);
+        clearCart();
+        navigate('/');
+      },
+      onClose: function() {
+        toast.info('Payment cancelled');
+        setIsProcessing(false);
+      }
+    });
+    handler.openIframe();
+    setIsProcessing(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Validate shipping info
+    if (!shippingInfo.firstName || !shippingInfo.lastName || !shippingInfo.email || !shippingInfo.phone || !shippingInfo.address || !shippingInfo.city) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    payWithPaystack();
   };
 
   if (items.length === 0) {
@@ -88,6 +102,7 @@ const Checkout: React.FC = () => {
       <Helmet>
         <title>Checkout - Brantech Electronics</title>
         <meta name="description" content="Complete your purchase securely." />
+        <script src="https://js.paystack.co/v1/inline.js"></script>
       </Helmet>
 
       <div className="min-h-screen bg-background">
@@ -184,111 +199,43 @@ const Checkout: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Payment Method */}
+                {/* Payment Information */}
                 <div>
                   <h2 className="font-display text-xl font-bold mb-4 flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-primary" />
-                    Payment Method
+                    Payment Information
                   </h2>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {/* M-Pesa */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('mpesa')}
-                      className={`p-4 rounded-xl border-2 text-left transition-all ${
-                        paymentMethod === 'mpesa'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                          <Smartphone className="h-5 w-5 text-green-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium">M-Pesa</p>
-                          <p className="text-xs text-muted-foreground">Pay via STK Push</p>
-                        </div>
-                        {paymentMethod === 'mpesa' && (
-                          <Check className="h-5 w-5 text-primary ml-auto" />
-                        )}
+                  <div className="p-4 rounded-xl border-2 border-primary bg-primary/5">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                        <CreditCard className="h-5 w-5 text-blue-500" />
                       </div>
-                    </button>
-
-                    {/* Card */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('card')}
-                      className={`p-4 rounded-xl border-2 text-left transition-all ${
-                        paymentMethod === 'card'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <CreditCard className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">Card</p>
-                          <p className="text-xs text-muted-foreground">Visa, Mastercard</p>
-                        </div>
-                        {paymentMethod === 'card' && (
-                          <Check className="h-5 w-5 text-primary ml-auto" />
-                        )}
-                      </div>
-                    </button>
-                  </div>
-
-                  {/* Card Details */}
-                  {paymentMethod === 'card' && (
-                    <div className="mt-4 space-y-4 animate-fade-in">
                       <div>
-                        <label className="block text-sm font-medium mb-2">Card Number</label>
-                        <Input
-                          placeholder="1234 5678 9012 3456"
-                          className="bg-secondary/50"
-                          required
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-2">Expiry Date</label>
-                          <Input
-                            placeholder="MM/YY"
-                            className="bg-secondary/50"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-2">CVV</label>
-                          <Input
-                            placeholder="123"
-                            className="bg-secondary/50"
-                            required
-                          />
-                        </div>
+                        <p className="font-medium">Paystack</p>
+                        <p className="text-xs text-muted-foreground">Secure payment via Paystack</p>
                       </div>
                     </div>
-                  )}
+                    <p className="text-sm text-muted-foreground mt-2">
+                      You will be redirected to Paystack's secure payment page to complete your purchase.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Submit */}
                 <Button
                   type="submit"
-                  variant="hero"
                   size="xl"
-                  className="w-full"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg shadow-lg transition-all duration-200"
                   disabled={isProcessing}
                 >
                   {isProcessing ? (
                     <div className="flex items-center gap-3">
-                      <div className="h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                      Processing...
+                      <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Processing Payment...
                     </div>
                   ) : (
                     <>
-                      Pay {formatPrice(total)}
+                      Pay Now - {formatPrice(total)}
                     </>
                   )}
                 </Button>

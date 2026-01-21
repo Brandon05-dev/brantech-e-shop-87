@@ -1,8 +1,10 @@
 import axios from 'axios';
 import Stripe from 'stripe';
+import config from '../config/config.js';
+import paystackService from '../services/paystack.service.js';
 import Order from '../models/Order.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(config.STRIPE_SECRET_KEY);
 
 // @desc    Initiate M-Pesa payment
 // @route   POST /api/payment/mpesa/initiate
@@ -105,32 +107,95 @@ export const mpesaCallback = async (req, res) => {
   }
 };
 
-// @desc    Create Stripe payment intent
-// @route   POST /api/payment/stripe/create-intent
+// @desc    Initialize Paystack payment
+// @route   POST /api/payment/paystack/initialize
 // @access  Private
-export const createStripePaymentIntent = async (req, res) => {
+export const initializePaystackPayment = async (req, res) => {
   try {
-    const { amount, orderId } = req.body;
+    const { email, amount, orderId, callback_url, metadata } = req.body;
 
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+    if (!email || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and amount are required'
+      });
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: 'kes',
+    // Generate unique reference
+    const reference = paystackService.generateReference();
+
+    // Convert amount to kobo/cents
+    const amountInKobo = paystackService.toSmallestUnit(amount);
+
+    const transactionData = {
+      email,
+      amount: amountInKobo,
+      reference,
+      callback_url: callback_url || `${config.CLIENT_URL}/payment/callback`,
       metadata: {
-        orderId: order._id.toString(),
-        orderNumber: order.orderNumber
+        orderId,
+        ...metadata
+      }
+    };
+
+    const result = await paystackService.initializeTransaction(transactionData);
+
+    res.status(200).json({
+      success: true,
+      message: 'Payment initialized successfully',
+      data: {
+        ...result.data,
+        reference
       }
     });
-
-    res.json({
-      success: true,
-      clientSecret: paymentIntent.client_secret
-    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Payment Initialization Error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Verify Paystack payment
+// @route   POST /api/payment/verify-payment
+// @access  Public
+export const verifyPaystackPayment = async (req, res) => {
+  try {
+    const { reference } = req.body;
+
+    const result = await paystackService.verifyTransaction(reference);
+
+    if (result.verified) {
+      // Payment successful - you can add order update logic here
+      // Example: Update order status in database
+      // await Order.findOneAndUpdate(
+      //   { paymentReference: reference },
+      //   {
+      //     isPaid: true,
+      //     paidAt: new Date(),
+      //     status: 'paid',
+      //     paymentDetails: result.data
+      //   }
+      // );
+
+      res.status(200).json({
+        success: true,
+        message: result.message,
+        data: result.data
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message,
+        data: result.data
+      });
+    }
+  } catch (error) {
+    console.error('Payment Verification Error:', error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
